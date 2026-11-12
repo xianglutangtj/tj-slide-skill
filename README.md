@@ -47,13 +47,13 @@ Clone the repository into the skill-discovery directory used by your agent.
 ### Codex
 
 ```bash
-git clone https://github.com/XiangluTANG111/tj-slide-skill.git ~/.codex/skills/tj-slide-skill
+git clone https://github.com/xianglutangtj/tj-slide-skill.git ~/.codex/skills/tj-slide-skill
 ```
 
 ### Claude Code
 
 ```bash
-git clone https://github.com/XiangluTANG111/tj-slide-skill.git ~/.claude/skills/tj-slide-skill
+git clone https://github.com/xianglutangtj/tj-slide-skill.git ~/.claude/skills/tj-slide-skill
 ```
 
 If your environment uses a workspace-level skill index, clone the repository into that indexed directory instead.
