@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Starter deck</title>
+<!--
+  TJ Slide Skill starter. One file, no dependencies, works offline.
+  Copy it, keep the ENGINE block and the SYSTEM styles, replace the three example slides.
+
+  How a slide is written:
+    <section class="frame" id="..."> one slide
+    data-s="2"     show this element from click 2 on
+    data-e="4"     hide it again from click 4 on (lets the next detail take its place)
+    data-dim="3"   keep it visible but push it into the background from click 3 on
+    <aside class="notes"> speaker notes, toggled with N
+  Open deck.html#2.3 to jump to slide 2, click 3.
+-->
+<style>
+/* ---------- SYSTEM: tokens ---------- */
+:root{
+  /* Each colour has one job. Swap the values for your own institution; keep the jobs. */
+  --ink:#00274c;        /* text, done work, the active step */
+  --accent:#ffcb05;     /* the one warm highlight: "so", "new", the question to answer */
+  --ok:#2f65d8;         /* what is established */
+  --warn:#d84a3a;       /* skipped, unresolved, not yet */
+  --paper:#ffffff;
+  --soft:#f3f6f8;       /* quiet background for a visual area */
+  --soft-ok:#edf3ff;
+  --soft-warn:#fff0ed;
+  --muted:#536577;      /* labels, secondary text */
+  --line:#cbd6df;       /* hairlines and card borders */
+  --serif:Georgia,"Times New Roman",serif;        /* claim titles only */
+  --sans:Inter,"Helvetica Neue",Arial,sans-serif; /* everything else */
+  --radius:18px;
+  --shadow:0 12px 34px rgba(0,39,76,.08);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#dfe6eb;font-family:var(--sans)}
+p,h3{margin:0}
+
+/* ---------- SYSTEM: canvas ----------
+   Everything is laid out on a fixed 1920x1080 stage in pixels, then the whole stage is
+   scaled to the window. Sizes you type are the sizes the room sees on a 1080p projector. */
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:var(--paper)}
+.frame{position:absolute;inset:0;display:none;background:var(--paper);color:var(--ink)}
+.frame.active{display:block}
+.frame::after{content:"";position:absolute;left:120px;right:120px;bottom:76px;height:1px;background:#e4e9ed}
+.eyebrow{position:absolute;left:120px;top:50px;padding-left:24px;font-size:21px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.eyebrow::before{content:"";position:absolute;left:0;top:1px;width:8px;height:24px;background:var(--accent)}
+h1{position:absolute;left:120px;top:96px;margin:0;width:1680px;font-family:var(--serif);font-size:68px;line-height:1.04;font-weight:700;letter-spacing:-1.6px}
+/* The content box starts below a two-line title, so a long title never collides with it. */
+.content{position:absolute;left:120px;top:260px;width:1680px;height:730px}
+.folio{position:absolute;right:120px;bottom:30px;font-size:18px;font-weight:700;color:var(--muted)}
+.abs{position:absolute}
+.label{font-size:21px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- SYSTEM: reveal, replace, recede ---------- */
+[data-s]{opacity:0;visibility:hidden;transform:translateY(14px);transition:opacity .32s ease,transform .32s ease,filter .32s ease}
+[data-s].shown{opacity:1;visibility:visible;transform:none}
+[data-dim]{transition:opacity .32s ease,transform .32s ease,filter .32s ease}
+[data-dim].past{opacity:.28;filter:grayscale(1)}
+
+/* ---------- COMPONENT: timeline ---------- */
+.tl{position:absolute;top:56px;width:390px;padding-right:18px}
+.tl .dot{width:30px;height:30px;border:7px solid #fff;box-shadow:0 0 0 3px var(--ink);border-radius:50%;background:var(--ink);margin-bottom:18px}
+.tl.now .dot{background:var(--accent);box-shadow:0 0 0 4px var(--ink)}
+.tl h3{margin-bottom:8px;font-size:32px;letter-spacing:-.4px}
+.tl p{font-size:27px;line-height:1.28;color:#314457}
+
+/* ---------- COMPONENT: process box ----------
+   .done  filled ink           finished, or the step being explained
+   .skip  dashed warn outline  did not happen
+   .out   ink outline on white a result or a discussion point
+   .ask   accent fill          the question that decides what happens next */
+.box{position:absolute;border-radius:var(--radius);padding:18px 20px;text-align:center;font-weight:750;font-size:30px;line-height:1.18;display:flex;flex-direction:column;justify-content:center;box-shadow:var(--shadow)}
+.box small{display:block;font-weight:400;font-size:24px;line-height:1.3;margin-top:8px}
+.box .st{display:block;font-size:21px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.done{background:var(--ink);color:#fff}
+.done .st{color:var(--accent)}
+.skip{background:var(--soft-warn);color:#6f362f;border:3px dashed var(--warn);box-shadow:none}
+.skip .st{color:var(--warn)}
+.out{background:#fff;border:3px solid var(--ink);color:var(--ink);box-shadow:none}
+.ask{background:var(--accent);color:var(--ink)}
+.back{background:#fff;border:3px dashed var(--warn);color:var(--warn);box-shadow:none}
+/* legend: the swatch must be drawn exactly like the thing it explains */
+.lg{display:inline-flex;align-items:center;gap:10px;font-size:24px;margin-left:34px}
+.lg i{display:inline-block;width:30px;height:22px;border-radius:5px}
+
+/* ---------- COMPONENT: summary trio (what is solid / what is not / so) ---------- */
+.sum{position:absolute;height:170px;border-radius:var(--radius);padding:22px 28px;box-shadow:var(--shadow)}
+.sum b{display:block;font-size:24px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.sum p{font-size:32px;line-height:1.22;font-weight:750}
+.sum.solid{background:var(--soft-ok);border-left:10px solid var(--ok)}
+.sum.open{background:var(--soft-warn);border-left:10px solid var(--warn)}
+.sum.so{background:var(--accent)}
+
+/* ---------- COMPONENT: detail panel (appears under the step it explains, then leaves) ---------- */
+.panel{position:absolute;left:0;top:170px;width:1680px;height:540px;background:#fff;border:2px solid var(--line);border-radius:var(--radius);padding:34px 44px;box-shadow:var(--shadow)}
+.panel h3{margin-bottom:22px;font-size:25px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.big{margin:0;padding:0;list-style:none;font-size:38px;line-height:1.25}
+.big li{margin-bottom:26px;padding-left:58px;position:relative}
+.big li .n{position:absolute;left:0;top:0;width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--accent);font-size:24px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.big small{font-size:28px;color:#3a4a5c}
+.new{display:inline-block;background:var(--accent);color:var(--ink);font-size:20px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 10px;border-radius:5px;vertical-align:4px;white-space:nowrap}
+/* a picture instead of a list, when the step is one idea */
+.visual{position:absolute;left:0;top:170px;width:1680px;height:540px;border:2px solid var(--line);border-radius:var(--radius);background:var(--soft);display:flex;align-items:center;justify-content:center;gap:120px}
+.stack{position:relative;width:390px;height:300px}
+.stack i{position:absolute;left:50%;top:50%;width:250px;height:300px;border:3px solid var(--ink);border-radius:14px;background:#fff}
+.stack i:nth-child(1){transform:translate(-58%,-56%) rotate(-6deg);background:var(--soft-ok)}
+.stack i:nth-child(2){transform:translate(-50%,-50%) rotate(1deg)}
+.stack i:nth-child(3){transform:translate(-42%,-44%) rotate(6deg);background:#fff6d6}
+.stack strong{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--serif);font-size:54px;line-height:1;z-index:2}
+.verdict{width:520px;min-height:250px;border-radius:24px;background:var(--ink);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:38px}
+.verdict b{font-size:23px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:18px}
+.verdict span{font-family:var(--serif);font-size:48px;line-height:1.08;font-weight:700}
+
+/* ---------- COMPONENT: who does what ---------- */
+.card{position:absolute;top:0;width:820px;height:500px;background:#fff;border:2px solid var(--line);border-top:12px solid var(--ink);border-radius:var(--radius);padding:30px 42px;box-shadow:var(--shadow)}
+.card h3{font-family:var(--serif);font-size:50px;margin-bottom:4px}
+.card .role{font-size:23px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:20px}
+.card ul{margin:0;padding-left:34px;font-size:36px;line-height:1.25}
+.card li{margin-bottom:16px}
+.strip{position:absolute;left:0;top:536px;width:1680px;height:180px;background:var(--ink);color:#fff;border-radius:var(--radius);padding:30px 44px;display:flex;align-items:center;gap:50px}
+.strip .k{font-size:24px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.strip .v{font-size:44px;font-weight:700}
+.strip .why{font-size:34px;line-height:1.3}
+
+/* ---------- SYSTEM: presenter chrome (outside the stage, never in screenshots of the slide) ---------- */
+#notes{position:fixed;right:0;top:0;bottom:0;width:min(520px,90vw);background:#fffdf6;color:var(--ink);padding:28px;font-size:18px;line-height:1.5;overflow:auto;box-shadow:-6px 0 24px rgba(0,0,0,.3);display:none;z-index:5}
+#notes.open{display:block}
+#notes h2{font-size:16px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+#help{position:fixed;left:12px;bottom:10px;color:#8fa0b2;font-size:13px;z-index:4}
+aside.notes{display:none}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- SLIDE 1 · where we are and why: timeline, then the process with gaps, then a three-part summary -->
+<section class="frame" id="s-where">
+  <div class="eyebrow">Project name · Update · Date</div>
+  <h1>The report is a first draft: two review steps were skipped</h1>
+  <div class="content">
+    <div data-s="1">
+      <div class="label abs" style="left:0;top:0">How we got here</div>
+      <svg class="abs" style="left:0;top:56px" width="1680" height="30" aria-hidden="true"><line x1="14" y1="14" x2="1304" y2="14" stroke="#cbd6df" stroke-width="5"/></svg>
+      <div class="tl" style="left:0"><div class="dot"></div><h3>In spring</h3><p>Analyst set the rules</p></div>
+      <div class="tl" style="left:430px"><div class="dot"></div><h3>At the conference</h3><p>Draft shown, made fast</p></div>
+      <div class="tl" style="left:860px"><div class="dot"></div><h3>Last meeting</h3><p>New changes proposed</p></div>
+      <div class="tl now" style="left:1290px"><div class="dot"></div><h3>Now</h3><p>Do the skipped steps</p></div>
+    </div>
+
+    <div data-s="2">
+      <div class="label abs" style="left:0;top:224px">The usual steps, and what happened this time</div>
+      <div class="abs" style="right:0;top:220px">
+        <span class="lg"><i style="background:var(--ink)"></i>Done</span>
+        <span class="lg"><i style="background:var(--soft-warn);border:2px dashed var(--warn)"></i>Skipped</span>
+      </div>
+      <svg class="abs" style="left:0;top:270px" width="1680" height="200" aria-hidden="true">
+        <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#00274c"/></marker></defs>
+        <line x1="322" y1="100" x2="350" y2="100" stroke="#00274c" stroke-width="4" marker-end="url(#a1)"/>
+        <line x1="662" y1="100" x2="690" y2="100" stroke="#00274c" stroke-width="4" marker-end="url(#a1)"/>
+        <line x1="1002" y1="100" x2="1030" y2="100" stroke="#00274c" stroke-width="4" marker-end="url(#a1)"/>
+        <line x1="1342" y1="100" x2="1370" y2="100" stroke="#00274c" stroke-width="4" marker-end="url(#a1)"/>
+      </svg>
+      <div class="box done" style="left:0;top:270px;width:318px;height:200px"><span class="st">1 · Done</span>Set the rules<small>Analyst</small></div>
+      <div class="box skip" style="left:354px;top:270px;width:304px;height:200px"><span class="st">2 · Skipped</span>Reviewer revises the rules</div>
+      <div class="box done" style="left:694px;top:270px;width:304px;height:200px"><span class="st">3 · Done</span>Sort all 120 cases</div>
+      <div class="box skip" style="left:1034px;top:270px;width:304px;height:200px"><span class="st">4 · Skipped</span>Reviewer checks the cases</div>
+      <div class="box out" style="left:1374px;top:270px;width:306px;height:200px">The report we showed<small>first draft</small></div>
+    </div>
+
+    <div class="sum solid" data-s="3" style="left:0;top:530px;width:500px"><b>What is solid</b><p>Finding and screening cases</p></div>
+    <div class="sum open" data-s="4" style="left:536px;top:530px;width:560px"><b>What is not</b><p>The rules, and where each case sits</p></div>
+    <div class="sum so" data-s="5" style="left:1132px;top:530px;width:548px"><b>So</b><p>This part needs more work from us</p></div>
+  </div>
+  <aside class="notes">Click 1: the timeline, in one breath. Click 2: the usual steps; point at the two dashed boxes. Clicks 3 to 5: the summary. Say why each one is solid or not here, not on the slide.</aside>
+</section>
+
+<!-- SLIDE 2 · one loop: each step arrives with its detail, the detail leaves, earlier steps recede -->
+<section class="frame" id="s-loop">
+  <div class="eyebrow">The work from here</div>
+  <h1>Everything open goes into one loop</h1>
+  <div class="content">
+    <div class="abs" style="right:0;top:-70px"><span class="lg"><span class="new">New</span>proposed at the last meeting</span></div>
+
+    <div class="box done" data-s="1" data-dim="2" style="left:0;top:0;width:520px;height:140px"><span class="st">Step 1 · Reviewer</span>Check sample cases, revise the rules</div>
+    <div data-s="2" data-dim="3">
+      <svg class="abs" style="left:520px;top:0" width="60" height="140" aria-hidden="true"><defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#00274c"/></marker></defs><line x1="6" y1="70" x2="54" y2="70" stroke="#00274c" stroke-width="4" marker-end="url(#a2)"/></svg>
+      <div class="box done" style="left:580px;top:0;width:520px;height:140px"><span class="st">Step 2 · Analyst</span>Sort all cases again</div>
+    </div>
+    <div data-s="3" data-dim="4">
+      <svg class="abs" style="left:1100px;top:0" width="60" height="140" aria-hidden="true"><line x1="6" y1="70" x2="54" y2="70" stroke="#00274c" stroke-width="4" marker-end="url(#a2)"/></svg>
+      <div class="box done" style="left:1160px;top:0;width:520px;height:140px"><span class="st">Step 3 · Reviewer</span>Check all cases, make the final decision</div>
+    </div>
+
+    <div class="panel" data-s="1" data-e="2">
+      <h3>Step 1 · What to look at</h3>
+      <ul class="big">
+        <li><span class="n">1</span><b>Are the categories split well?</b> <small>3 top categories <span class="new">New</span></small></li>
+        <li><span class="n">2</span><b>Was the right content left out?</b></li>
+        <li><span class="n">3</span><b>Where did we accept a first answer too easily?</b></li>
+      </ul>
+    </div>
+
+    <div class="panel" data-s="2" data-e="3">
+      <h3>Step 2 · What each run includes</h3>
+      <ul class="big">
+        <li><span class="n">·</span><b>Every case</b>, sorted with the revised rules</li>
+        <li><span class="n">·</span><b>Updated group labels</b> <span class="new">New</span><br><small>region · age group · setting</small></li>
+      </ul>
+    </div>
+
+    <div class="visual" data-s="3" data-e="4">
+      <div class="stack" aria-label="All 120 cases"><i></i><i></i><i></i><strong>All 120<br>cases</strong></div>
+      <div style="font-size:86px" aria-hidden="true">→</div>
+      <div class="verdict"><b>Reviewer</b><span>Check every case,<br>make the final call</span></div>
+    </div>
+
+    <div data-s="4">
+      <svg class="abs" style="left:0;top:140px" width="1680" height="400" aria-hidden="true">
+        <path d="M1420 4 L1420 90 L260 90 L260 176" fill="none" stroke="#00274c" stroke-width="4" marker-end="url(#a2)"/>
+        <line x1="524" y1="270" x2="592" y2="270" stroke="#00274c" stroke-width="4" marker-end="url(#a2)"/>
+        <line x1="1124" y1="270" x2="1192" y2="270" stroke="#00274c" stroke-width="4" marker-end="url(#a2)"/>
+      </svg>
+      <div class="box ask" style="left:0;top:320px;width:520px;height:180px;font-size:46px">All good?</div>
+      <p class="abs" style="left:536px;top:366px;font-size:26px;font-weight:700">Yes</p>
+      <div class="box out" style="left:600px;top:320px;width:520px;height:180px;font-size:34px">A few bigger questions go to the lead</div>
+      <div class="box out" style="left:1200px;top:320px;width:480px;height:180px;font-size:34px">We meet to discuss them</div>
+    </div>
+    <div data-s="5">
+      <svg class="abs" style="left:0;top:500px" width="1680" height="100" aria-hidden="true">
+        <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#d84a3a"/></marker></defs>
+        <path d="M260 4 L260 80" fill="none" stroke="#d84a3a" stroke-width="4" stroke-dasharray="12 9" marker-end="url(#a3)"/>
+      </svg>
+      <div class="box back" style="left:0;top:584px;width:520px;height:100px;font-size:32px">Not yet → back to Step 1</div>
+    </div>
+  </div>
+  <aside class="notes">Click 1: Step 1 and its questions. Click 2: Step 2 replaces them. Click 3: Step 3. Click 4: if all is good, where it goes. Click 5: if not, another round. Every open item sits inside this one loop; none is a separate job.</aside>
+</section>
+
+<!-- SLIDE 3 · who does what, and the one thing that is on hold -->
+<section class="frame" id="s-who">
+  <div class="eyebrow">Next steps</div>
+  <h1>Who does what</h1>
+  <div class="content">
+    <div class="card" data-s="1" style="left:0">
+      <h3>Reviewer</h3><div class="role">Review and decide</div>
+      <ul><li>Check sample cases</li><li>Revise the rules</li><li>Check all cases, final decision</li><li>Pick the questions for the lead</li></ul>
+    </div>
+    <div class="card" data-s="2" style="left:860px;border-top-color:var(--accent)">
+      <h3>Analyst</h3><div class="role">Run and add</div>
+      <ul><li>Run each round</li><li>Update the group labels</li><li>Match the two counts</li><li>Find more cases</li></ul>
+    </div>
+    <div class="strip" data-s="3">
+      <div style="flex:0 0 430px"><p class="k">Decision memo</p><p class="v">On hold for now</p></div>
+      <p class="why">Not confirmed by the two of us yet.<br>First, we go deeper into the cases.</p>
+    </div>
+  </div>
+  <aside class="notes">Click 1: the reviewer's part. Click 2: the analyst's part. Click 3: what is on hold, and the one reason.</aside>
+</section>
+
+</div>
+<div id="notes"><h2>Speaker notes</h2><div id="notes-body"></div></div>
+<div id="help">← → or space · N notes · F fullscreen</div>
+
+<script>
+/* ---------- ENGINE: keep as is ---------- */
+const stage=document.getElementById('stage');
+const frames=[...document.querySelectorAll('.frame')];
+let si=0,step=0;                       // current slide index, current click on that slide
+const num=(e,k)=>+(e.dataset[k]||0);
+
+// Scale the fixed 1920x1080 stage to the window and centre it.
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);
+  stage.style.transform=`scale(${s})`;
+  stage.style.left=((innerWidth-1920*s)/2)+'px';stage.style.top=((innerHeight-1080*s)/2)+'px';}
+
+// Number of clicks a slide needs: the largest number used in data-s, data-e or data-dim.
+function maxStep(f){return Math.max(0,...[...f.querySelectorAll('[data-s],[data-e],[data-dim]')]
+  .map(e=>Math.max(num(e,'s'),num(e,'e'),num(e,'dim'))));}
+
+function render(){
+  frames.forEach((f,i)=>f.classList.toggle('active',i===si));
+  const f=frames[si];
+  f.dataset.step=step;                 // lets CSS react to the click: #s-loop[data-step="3"] .x{...}
+  f.querySelectorAll('[data-s]').forEach(e=>{const s=num(e,'s'),x=num(e,'e');
+    e.classList.toggle('shown',step>=s&&!(x&&step>=x));});
+  f.querySelectorAll('[data-dim]').forEach(e=>e.classList.toggle('past',step>=num(e,'dim')));
+  let fo=f.querySelector('.folio');
+  if(!fo){fo=document.createElement('div');fo.className='folio';f.appendChild(fo);}
+  fo.textContent=(si+1)+' / '+frames.length;
+  const n=f.querySelector('aside.notes');
+  document.getElementById('notes-body').textContent=n?n.textContent:'';
+  history.replaceState(null,'','#'+(si+1)+(step?'.'+step:''));
+}
+function next(){if(step<maxStep(frames[si])){step++;}else if(si<frames.length-1){si++;step=0;}render();}
+function prev(){if(step>0){step--;}else if(si>0){si--;step=maxStep(frames[si]);}render();}
+function go(slide,click){si=Math.min(Math.max(slide-1,0),frames.length-1);
+  step=Math.min(Math.max(click||0,0),maxStep(frames[si]));render();}
+function fromHash(){const p=location.hash.slice(1).split('.');const h=parseInt(p[0]);
+  if(h>0&&h<=frames.length)go(h,parseInt(p[1])||0);}
+
+document.addEventListener('keydown',e=>{const k=e.key;
+  if(['ArrowRight','PageDown',' ','Enter'].includes(k)){e.preventDefault();next();}
+  else if(['ArrowLeft','PageUp','Backspace'].includes(k)){e.preventDefault();prev();}
+  else if(k==='Home')go(1,0);
+  else if(k==='End')go(frames.length,Infinity);
+  else if(k==='n'||k==='N')document.getElementById('notes').classList.toggle('open');
+  else if(k==='f'||k==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();}});
+stage.addEventListener('click',e=>{if(!e.target.closest('a,button'))next();});
+addEventListener('resize',fit);
+addEventListener('hashchange',fromHash);
+// Used by scripts/verify_deck.mjs to walk every click of every slide.
+window.deck={slides:frames.length,clicks:i=>maxStep(frames[i-1]),go,state:()=>({slide:si+1,click:step})};
+fit();render();fromHash();
+</script>
+</body>
+</html>

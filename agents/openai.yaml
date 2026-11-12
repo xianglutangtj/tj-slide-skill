@@ -1,0 +1,5 @@
+interface:
+  display_name: "TJ Slide Skill"
+  short_description: "Build concise, speaker-led HTML slide decks"
+  default_prompt: "Create or revise this short HTML presentation using the TJ Slide Skill: preserve the content, reveal one idea per click, and verify every rendered state."
+

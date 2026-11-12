@@ -1,0 +1,14 @@
+{
+  "name": "tj-slide-skill",
+  "version": "1.0.0",
+  "private": true,
+  "description": "QA tooling for the TJ Slide Skill HTML starter.",
+  "type": "module",
+  "scripts": {
+    "verify": "node scripts/verify_deck.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1"
+  }
+}
+
